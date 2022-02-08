@@ -70,11 +70,9 @@ def test_delete(make_post_request, make_delete_request, make_get_request, redis_
 
     assert response.body['success'] is True
 
-    response = make_get_request('/role/{}'.format(role_id), headers={
+    response = make_get_request('/role/{}'.format(role_id), expected_status_code=404, headers={
         "Authorization": "Bearer {}".format(access_token)
     })
-
-    print(1)
 
 
 def test_read(make_post_request, make_get_request, redis_client, postgres_client):

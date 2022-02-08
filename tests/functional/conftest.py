@@ -33,10 +33,8 @@ def redis_client():
 @pytest.fixture(autouse=True)
 def es_data(postgres_client):
     cur = postgres_client.cursor()
-    cur.execute("DELETE FROM users")
-    cur.execute("DELETE FROM login_events")
-    cur.execute("DELETE FROM roles")
-    cur.execute("DELETE FROM users_roles")
+    for table_name in ['users', 'login_events', 'roles', 'users_roles']:
+        cur.execute("DELETE FROM {}".format(table_name))
     postgres_client.commit()
 
 

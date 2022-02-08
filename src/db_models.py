@@ -7,8 +7,8 @@ from sqlalchemy import Column, Integer, DateTime, Time, TIMESTAMP
 
 users_roles = db.Table(
     'users_roles',
-    db.Column('user_id', UUID(as_uuid=True), db.ForeignKey('users.id')),
-    db.Column('role_id', UUID(as_uuid=True), db.ForeignKey('roles.id'))
+    db.Column('user_id', UUID(as_uuid=True), db.ForeignKey('users.id', ondelete="CASCADE")),
+    db.Column('role_id', UUID(as_uuid=True), db.ForeignKey('roles.id', ondelete="CASCADE"))
 )
 
 

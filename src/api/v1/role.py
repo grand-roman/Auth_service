@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, Response
 from flask_jwt_extended import jwt_required
 
 from db_models import Role
@@ -38,7 +38,9 @@ def create():
 def read(role_id):
     role = Role.query.filter_by(id=role_id).first()
     if not role:
-        return jsonify()
+        response = jsonify()
+        response.status_code = 404
+        return response
 
     return jsonify({
         "id": role.id,
