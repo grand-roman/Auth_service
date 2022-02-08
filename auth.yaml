@@ -1,0 +1,286 @@
+swagger: "2.0"
+info:
+  description: ""
+  version: "1.0.0"
+  title: "Auth"
+basePath: "/api/v1"
+tags:
+  - name: "user"
+    description: "Operations about user"
+  - name: "role"
+    description: "Operations about role"
+schemes:
+  - "https"
+  - "http"
+paths:
+  /user:
+    post:
+      tags:
+        - "user"
+      summary: "Регистрация пользователя"
+      description: ""
+      operationId: "createUser"
+      produces:
+        - "application/json"
+      parameters:
+        - in: "body"
+          name: "body"
+          required: true
+          schema:
+            type: object
+            properties:
+              login:
+                type: string
+              password:
+                type: string
+      responses:
+        default:
+          # TODO: сразу вернет токены или должен быть редирект на логин
+          description: "successful operation"
+        409:
+          description: "Имя занято"
+  /user/login:
+    post:
+      tags:
+        - "user"
+      summary: "Вход пользователя"
+      description: ""
+      operationId: "loginUser"
+      produces:
+        - "application/json"
+      parameters:
+        - in: "body"
+          name: "body"
+          required: true
+          schema:
+            type: object
+            properties:
+              login:
+                description: "The user name for login"
+                type: string
+              password:
+                description: "The password for login in clear text"
+                type: string
+      responses:
+        200:
+          description: "successful operation"
+          schema:
+            type: "string"
+          headers:
+            Set-Cookie:
+              schema:
+                description: JWT
+                type: string
+                example: access_token=abc; Path=/; HttpOnly
+            "\0Set-Cookie":
+              schema:
+                description: Refresh Token
+                type: string
+                example: refresh_token=abc; Path=/; HttpOnly
+        400:
+          description: "Invalid username/password supplied"
+  /user/logout:
+    post:
+      tags:
+        - "user"
+      summary: "Выход пользователя"
+      description: ""
+      operationId: "logoutUser"
+      produces:
+        - "application/json"
+      responses:
+        200:
+          description: "successful operation"
+          schema:
+            type: "string"
+          headers:
+            Set-Cookie:
+              schema:
+                description: Пустой JWT?
+                type: string
+                example: access_token=abc; Path=/; HttpOnly
+            "\0Set-Cookie":
+              schema:
+                description: Пустой Refresh Token?
+                type: string
+                example: refresh_token=abc; Path=/; HttpOnly
+        400:
+          description: "Что то с токенами"
+  /token/refresh:
+    post:
+      tags:
+        - "user"
+      summary: "Обновление токена"
+      description: ""
+      operationId: "tokenRefresh"
+      produces:
+        - "application/json"
+      responses:
+        200:
+          description: "successful operation"
+          schema:
+            type: "string"
+          headers:
+            Set-Cookie:
+              schema:
+                description: Новый JWT
+                type: string
+                example: access_token=abc; Path=/; HttpOnly
+            "\0Set-Cookie":
+              schema:
+                description: Новый Refresh Token
+                type: string
+                example: refresh_token=abc; Path=/; HttpOnly
+        400:
+          description: "Что то с токенами"
+  /user/{userId}:
+    patch:
+      tags:
+        - "user"
+      summary: "Изменение пользователя"
+      description: ""
+      operationId: "modifyUser"
+      produces:
+        - "application/json"
+      parameters:
+        - in: "body"
+          name: "body"
+          required: true
+          schema:
+            type: object
+            properties:
+              login:
+                type: string
+              password:
+                type: string
+      responses:
+        default:
+          description: "successful operation"
+        400:
+          description: "Что то с токенами, имя пользователя занято"
+  /login/history:
+    patch:
+      tags:
+        - "user"
+      summary: "История входа"
+      description: ""
+      operationId: "loginHistoryUser"
+      produces:
+        - "application/json"
+      responses:
+        default:
+          description: "successful operation"
+        400:
+          description: "Что то с токенами"
+  /role/:
+    post:
+      tags:
+        - "role"
+      summary: "Создание роли"
+      description: ""
+      operationId: "addRole"
+      consumes:
+        - "application/json"
+      produces:
+        - "application/json"
+      parameters:
+        - in: "body"
+          name: "body"
+          description: ""
+          required: true
+          schema:
+            $ref: "#/definitions/Role"
+      responses:
+        default:
+          description: "successful operation"
+        400:
+          description: "Что то с токенами"
+  #      security:
+  #        - petstore_auth:
+  #            - "write:pets"
+  #            - "read:pets"
+  /role/{roleId}:
+    put:
+      tags:
+        - "role"
+      summary: "Изменение роли"
+      description: ""
+      operationId: "modifyRole"
+      consumes:
+        - "application/json"
+      produces:
+        - "application/json"
+      parameters:
+        - in: "body"
+          name: "body"
+          description: ""
+          required: true
+          schema:
+            $ref: "#/definitions/Role"
+      responses:
+        default:
+          description: "successful operation"
+        400:
+          description: "Что то с токенами"
+    delete:
+      tags:
+        - "role"
+      summary: "Удаление роли"
+      description: ""
+      operationId: "deleteRole"
+      consumes:
+        - "application/json"
+      produces:
+        - "application/json"
+      responses:
+        default:
+          description: "successful operation"
+        400:
+          description: "Что то с токенами"
+
+  /user/{userId}/role/{roleId}:
+    post:
+      tags:
+        - "userRole"
+      summary: "Назначение роли пользователю"
+      description: ""
+      operationId: "addRoleToUser"
+      responses:
+        default:
+          description: "successful operation"
+        400:
+          description: "Что то с токенами, роль уже есть"
+    delete:
+      tags:
+        - "userRole"
+      summary: "Назначение роли пользователю"
+      description: ""
+      operationId: "addRoleToUser"
+      responses:
+        default:
+          description: "successful operation"
+        400:
+          description: "Что то с токенами"
+  /user/{userId}/role:
+    get:
+      tags:
+        - "userRole"
+      summary: "Получение ролей пользователя"
+      description: ""
+      operationId: "getUserRole"
+      responses:
+        default:
+          description: "successful operation"
+
+
+definitions:
+  Role:
+    type: "object"
+    required:
+      - "name"
+    properties:
+      id:
+        type: "string"
+        format: "uuid"
+      name:
+        type: "string"
