@@ -5,7 +5,7 @@ from db import db
 from no_sql_db import redis_db
 from db_models import User, LoginEvent
 
-auth_blueprint = Blueprint("auth", __name__)
+auth_blueprint = Blueprint("auth", __name__, url_prefix="auth")
 
 
 class ParamsException(Exception):

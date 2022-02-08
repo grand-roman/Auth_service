@@ -30,12 +30,48 @@ def redis_client():
     client.close()
 
 
-@pytest.fixture(scope='session', autouse=True)
+@pytest.fixture(autouse=True)
 def es_data(postgres_client):
     cur = postgres_client.cursor()
     cur.execute("DELETE FROM users")
     cur.execute("DELETE FROM login_events")
+    cur.execute("DELETE FROM roles")
+    cur.execute("DELETE FROM users_roles")
     postgres_client.commit()
+
+
+@pytest.fixture
+def make_put_request():
+    def inner(method: str, expected_status_code=200, data: dict = None, headers: dict = None) -> HTTPResponse:
+        data = data or {}
+        headers = headers or {}
+        url = service_url + '/api/v1' + method
+        with requests.put(url, json=data, headers=headers) as response:
+            assert response.status_code == expected_status_code
+            return HTTPResponse(
+                body=response.json(),
+                headers=response.headers,
+                status=response.status_code,
+            )
+
+    return inner
+
+
+@pytest.fixture
+def make_delete_request():
+    def inner(method: str, expected_status_code=200, data: dict = None, headers: dict = None) -> HTTPResponse:
+        data = data or {}
+        headers = headers or {}
+        url = service_url + '/api/v1' + method
+        with requests.delete(url, json=data, headers=headers) as response:
+            assert response.status_code == expected_status_code
+            return HTTPResponse(
+                body=response.json(),
+                headers=response.headers,
+                status=response.status_code,
+            )
+
+    return inner
 
 
 @pytest.fixture

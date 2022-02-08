@@ -13,7 +13,7 @@ def test_login(make_post_request, redis_client, postgres_client):
     cur.execute("INSERT INTO users (id, login, password) VALUES (%s, %s, %s)", tuple(user.values()))
     postgres_client.commit()
 
-    result = make_post_request('/login', data={
+    result = make_post_request('/auth/login', data={
         "login": "user1",
         "password": "password"
     })
@@ -28,14 +28,14 @@ def test_update_access_token(make_post_request, redis_client, postgres_client):
     cur.execute("INSERT INTO users (id, login, password) VALUES (%s, %s, %s)", tuple(user.values()))
     postgres_client.commit()
 
-    response = make_post_request('/login', data={
+    response = make_post_request('/auth/login', data={
         "login": "user2",
         "password": "password"
     })
     access_token = response.body['access_token']
     refresh_token = response.body['refresh_token']
 
-    response = make_post_request('/refresh', headers={
+    response = make_post_request('/auth/refresh', headers={
         "Authorization": "Bearer {}".format(refresh_token)
     })
     new_access_token = response.body['access_token']
@@ -52,18 +52,18 @@ def test_get_login_history(make_get_request, make_post_request, redis_client, po
     postgres_client.commit()
 
     for i in range(3):
-        response = make_post_request('/login', data={
+        response = make_post_request('/auth/login', data={
             "login": "user3",
             "password": "password"
         })
 
-    response = make_post_request('/login', data={
+    response = make_post_request('/auth/login', data={
         "login": "user3",
         "password": "password"
     })
 
     access_token = response.body['access_token']
-    response = make_get_request('/history', headers={
+    response = make_get_request('/auth/history', headers={
         "Authorization": "Bearer {}".format(access_token)
     })
 
