@@ -1,0 +1,14 @@
+services:
+  postgres:
+    image: postgres:13
+    ports:
+      - "5432:5432"
+    env_file:
+      - ./env/.postgres.env
+    volumes:
+      - postgres:/var/lib/postgresql/data
+      - ./db:/docker-entrypoint-initdb.d/
+
+
+volumes:
+  postgres:
