@@ -3,23 +3,22 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 
 from db_models import User
 from db import db
+from utils.password import hash_password
 
 user_blueprint = Blueprint("user", __name__)
 
-
-# TODO: hash password
 
 @user_blueprint.route("/", methods=["POST"])
 def create():
     try:
         login: str = request.json['login']
-        password: list = request.json['password']
+        password: str = request.json['password']
     except KeyError:
         return None
 
     user = User(
         login=login,
-        password=password
+        password=hash_password(password)
     )
     db.session.add(user)
     db.session.commit()
@@ -30,20 +29,24 @@ def create():
     })
 
 
-@user_blueprint.route("", methods=["PUT"])
+@user_blueprint.route("/change_password", methods=["PUT"])
 @jwt_required()
-def update():
+def change_password():
     try:
         login: str = get_jwt_identity()
-        password: list = request.json['password']
+        password: str = request.json['password']
+        new_password: str = request.json['new_password']
     except KeyError:
         return None
 
-    user = User.query.filter_by(login=login, password=password).first()
+    user = User.query.filter_by(
+        login=login,
+        password=hash_password(password)
+    ).first()
     if not user:
         return None
 
-    user.password = password
+    user.password = hash_password(password)
     db.session.add(user)
     db.session.commit()
 

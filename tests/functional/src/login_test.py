@@ -1,20 +1,10 @@
-from http import HTTPStatus
-import pytest
-
-# from ..testdata.data import FILMS
 from ..testdata.helper import create_user
 
-import requests
-
-
 def test_login(make_post_request, redis_client, postgres_client):
-    user = create_user("user1", "password")
-    cur = postgres_client.cursor()
-    cur.execute("INSERT INTO users (id, login, password) VALUES (%s, %s, %s)", tuple(user.values()))
-    postgres_client.commit()
+    create_user(make_post_request)
 
     result = make_post_request('/auth/login', data={
-        "login": "user1",
+        "login": "user",
         "password": "password"
     })
 
@@ -23,13 +13,10 @@ def test_login(make_post_request, redis_client, postgres_client):
 
 
 def test_update_access_token(make_post_request, redis_client, postgres_client):
-    user = create_user("user2", "password")
-    cur = postgres_client.cursor()
-    cur.execute("INSERT INTO users (id, login, password) VALUES (%s, %s, %s)", tuple(user.values()))
-    postgres_client.commit()
+    create_user(make_post_request)
 
     response = make_post_request('/auth/login', data={
-        "login": "user2",
+        "login": "user",
         "password": "password"
     })
     access_token = response.body['access_token']
@@ -46,19 +33,16 @@ def test_update_access_token(make_post_request, redis_client, postgres_client):
 
 
 def test_get_login_history(make_get_request, make_post_request, redis_client, postgres_client):
-    user = create_user("user3", "password")
-    cur = postgres_client.cursor()
-    cur.execute("INSERT INTO users (id, login, password) VALUES (%s, %s, %s)", tuple(user.values()))
-    postgres_client.commit()
+    create_user(make_post_request)
 
     for i in range(3):
         response = make_post_request('/auth/login', data={
-            "login": "user3",
+            "login": "user",
             "password": "password"
         })
 
     response = make_post_request('/auth/login', data={
-        "login": "user3",
+        "login": "user",
         "password": "password"
     })
 

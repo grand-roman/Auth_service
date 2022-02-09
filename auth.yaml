@@ -35,7 +35,6 @@ paths:
                 type: string
       responses:
         default:
-          # TODO: сразу вернет токены или должен быть редирект на логин
           description: "successful operation"
         409:
           description: "Имя занято"

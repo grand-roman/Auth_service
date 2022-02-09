@@ -1,22 +1,8 @@
-from ..testdata.helper import create_user
+from ..testdata.helper import create_user, get_token
 
 
-def get_token(postgres_client, make_post_request):
-    user = create_user("user1", "password")
-    cur = postgres_client.cursor()
-    cur.execute("INSERT INTO users (id, login, password) VALUES (%s, %s, %s)", tuple(user.values()))
-    postgres_client.commit()
-
-    response = make_post_request('/auth/login', data={
-        "login": "user1",
-        "password": "password"
-    })
-
-    return response.body['access_token']
-
-
-def test_create(make_post_request, redis_client, postgres_client):
-    access_token = get_token(postgres_client, make_post_request)
+def test_create(make_post_request, postgres_client):
+    access_token = get_token(make_post_request)
     data = {
         'name': 'role0',
         'permissions': ['admin', 'superuser']
@@ -29,7 +15,7 @@ def test_create(make_post_request, redis_client, postgres_client):
 
 
 def test_update(make_post_request, make_put_request, make_get_request, redis_client, postgres_client):
-    access_token = get_token(postgres_client, make_post_request)
+    access_token = get_token(make_post_request)
     data = {
         'name': 'role1',
         'permissions': ['admin']
@@ -54,7 +40,7 @@ def test_update(make_post_request, make_put_request, make_get_request, redis_cli
 
 
 def test_delete(make_post_request, make_delete_request, make_get_request, redis_client, postgres_client):
-    access_token = get_token(postgres_client, make_post_request)
+    access_token = get_token(make_post_request)
     data = {
         'name': 'role2',
         'permissions': ['admin']
@@ -76,7 +62,7 @@ def test_delete(make_post_request, make_delete_request, make_get_request, redis_
 
 
 def test_read(make_post_request, make_get_request, redis_client, postgres_client):
-    access_token = get_token(postgres_client, make_post_request)
+    access_token = get_token(make_post_request)
     data = {
         'name': 'role3',
         'permissions': ['admin']

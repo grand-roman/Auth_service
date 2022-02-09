@@ -4,12 +4,9 @@ from flask_jwt_extended import create_access_token, create_refresh_token, get_jw
 from db import db
 from no_sql_db import redis_db
 from db_models import User, LoginEvent
+from utils.password import hash_password
 
 auth_blueprint = Blueprint("auth", __name__, url_prefix="auth")
-
-
-class ParamsException(Exception):
-    pass
 
 
 @auth_blueprint.route("/login", methods=["POST"])
@@ -17,21 +14,18 @@ def login():
     try:
         login = request.json['login']
         password = request.json['password']
-    except ParamsException:
+    except KeyError:
         return {"error": ""}
 
-    # TODO: hash password
-    password_hash = password
+    password_hash = hash_password(password)
 
     user = User.query.filter_by(login=login, password=password_hash).first()
     if not user:
         return {"error": "user not found"}
 
-    # TODO: EXPIRE
     access_token = create_access_token(identity=user.login)
     refresh_token = create_refresh_token(identity=user.login)
 
-    # TODO: backoff?
     redis_db.set('{}:{}'.format(user.login, 'refresh_token'), refresh_token)
 
     login_event = LoginEvent(
