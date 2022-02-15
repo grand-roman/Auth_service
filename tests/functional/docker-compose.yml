@@ -9,13 +9,11 @@ services:
       - env/.postgres.env
     volumes:
       - ../../../db:/docker-entrypoint-initdb.d/
-      #      - postgres:/var/lib/postgresql/data
-
     networks:
       - test_net
 
   redis:
-    image: redis:latest
+    image: redis:6
     networks:
       - test_net
 
@@ -26,7 +24,7 @@ services:
       context: ../../
     restart: always
     env_file:
-      - env/.app.env
+      - env/.env
     networks:
       - test_net
     depends_on:
@@ -44,6 +42,8 @@ services:
       sh -c "python3 utils/wait_for_redis.py && python3 utils/wait_for_postgres.py && pytest src/"
     volumes:
       - .:/usr/src/tests/
+    depends_on:
+      - auth
 
 networks:
   test_net:
