@@ -9,6 +9,7 @@ services:
       - env/.postgres.env
     volumes:
       - ../../../db:/docker-entrypoint-initdb.d/
+      - postgres_test_data:/var/lib/postgresql/data
     networks:
       - test_net
 
@@ -16,6 +17,8 @@ services:
     image: redis:6
     networks:
       - test_net
+    volumes:
+      - redis_test_data:/data
 
   auth:
     container_name: auth
@@ -44,6 +47,11 @@ services:
       - .:/usr/src/tests/
     depends_on:
       - auth
+
+volumes:
+  redis_test_data:
+  postgres_test_data:
+
 
 networks:
   test_net:
