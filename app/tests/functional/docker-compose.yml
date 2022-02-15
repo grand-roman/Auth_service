@@ -1,0 +1,51 @@
+version: '3.7'
+
+services:
+  postgres:
+    image: postgres:13
+    ports:
+      - "5432:5432"
+    env_file:
+      - env/.postgres.env
+    volumes:
+      - ../../../db:/docker-entrypoint-initdb.d/
+      #      - postgres:/var/lib/postgresql/data
+
+    networks:
+      - test_net
+
+  redis:
+    image: redis:latest
+    networks:
+      - test_net
+
+  auth:
+    container_name: auth
+    image: auth
+    build:
+      context: ../../
+    restart: always
+    env_file:
+      - env/.app.env
+    networks:
+      - test_net
+    depends_on:
+      - redis
+      - postgres
+
+  auth_test:
+    container_name: auth_test
+    image: auth_test
+    build:
+      context: .
+    networks:
+      - test_net
+    entrypoint: >
+      sh -c "python3 utils/wait_for_redis.py && python3 utils/wait_for_postgres.py && pytest src/"
+    volumes:
+      - .:/usr/src/tests/
+
+networks:
+  test_net:
+    external: true
+    name: auth_test
