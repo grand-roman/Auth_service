@@ -10,4 +10,7 @@ RUN pip install -r requirements.txt
 
 COPY src .
 
-CMD python app.py
+CMD gunicorn --worker-class gevent \
+  --workers $WORKERS \
+  --bind 0.0.0.0:$PORT \
+  wsgi_app:app
