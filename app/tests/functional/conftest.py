@@ -104,9 +104,3 @@ def make_get_request():
             )
 
     return inner
-
-# @pytest.fixture(autouse=True)
-# def redis_flush(redis_client):
-#     await redis_client.flushall()
-#     print('flush redis')
-#     return

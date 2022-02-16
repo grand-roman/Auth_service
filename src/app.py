@@ -24,9 +24,10 @@ app.config["JWT_REFRESH_TOKEN_EXPIRES"] = timedelta(days=30)
 jwt = JWTManager(app)
 jwt.init_app(app)
 
+init_db(app)
+
 
 def main():
-    init_db(app)
     app.run(host=os.getenv('HOST'), port=os.getenv('PORT'))
 
 
