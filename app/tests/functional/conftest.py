@@ -1,106 +1,78 @@
-import os
+import json
+from pathlib import Path
+
 import pytest
-import requests
 
-from .settings import HTTPResponse, service_url, redis_host, redis_port
-import psycopg2
-from psycopg2.extras import DictCursor
-import redis
+from app.main import create_app
+from app.main.constants import SUPERUSER_ROLE, SUPERUSER_PERMISSIONS
+from app.main.model.user_auth_data import UserAuthData
+from app.main.model.users import User
+from app.main.model.roles import Role
+from app.main.service.db import db_session
+
+pytest_plugins = (
+    "app.tests.functional.utils.roles_conftest",
+    "app.tests.functional.utils.auth_conftest",
+)
+
+BASE_DIR = Path(__file__).resolve().parent
 
 
-@pytest.fixture(scope='session')
-def postgres_client():
-    dsl = {
-        'dbname': os.getenv('POSTGRES_DBNAME', 'auth'),
-        'user': os.getenv('POSTGRES_USER', 'postgres'),
-        'password': os.getenv('POSTGRES_PASSWORD', 'password'),
-        'host': os.getenv('POSTGRES_HOST', 'postgres'),
-        'port': os.getenv('POSTGRES_PORT', 5432)
+@pytest.fixture()
+def client():
+    app = create_app()
+
+    app.config["TESTING"] = True
+    app.testing = True
+
+    with app.app_context():
+        with app.test_client() as client:
+            yield client
+
+
+@pytest.fixture
+def load_test_data():
+    def load_data(filename: str):
+        with open(BASE_DIR / 'testdata' / filename) as file:  
+            return json.load(file)          
+    return load_data
+
+
+@pytest.fixture
+def user_for_test(load_test_user_for_register):
+
+    user = User(**load_test_user_for_register)
+    role = Role(
+        name=SUPERUSER_ROLE,
+        permissions=SUPERUSER_PERMISSIONS,
+    )
+    user.roles.append(role)
+
+    db_session.add(user)
+    db_session.add(role)
+    db_session.commit()
+    yield user
+    UserAuthData.query.filter_by(user_id=user.id).delete()
+    db_session.delete(user)
+    db_session.delete(role)
+    db_session.commit()
+
+
+@pytest.fixture
+def client_login(client, user_for_test, api_v1_user_login, load_test_user_for_register):
+    mimetype = 'application/json'
+    headers = {
+        'Content-Type': mimetype,
+        'Accept': mimetype
     }
-
-    connection = psycopg2.connect(**dsl, cursor_factory=DictCursor)
-    yield connection
-    connection.close()
-
-
-@pytest.fixture(scope='session')
-def redis_client():
-    client = redis.Redis(redis_host, redis_port)
-    yield client
-    client.close()
-
-
-@pytest.fixture(autouse=True)
-def es_data(postgres_client):
-    cur = postgres_client.cursor()
-    for table_name in ['users', 'login_events', 'roles', 'users_roles']:
-        cur.execute("DELETE FROM {}".format(table_name))
-    postgres_client.commit()
-
-
-@pytest.fixture
-def make_put_request():
-    def inner(method: str, expected_status_code=200, data: dict = None, headers: dict = None) -> HTTPResponse:
-        data = data or {}
-        headers = headers or {}
-        url = service_url + '/api/v1' + method
-        with requests.put(url, json=data, headers=headers) as response:
-            assert response.status_code == expected_status_code
-            return HTTPResponse(
-                body=response.json(),
-                headers=response.headers,
-                status=response.status_code,
-            )
-
-    return inner
-
-
-@pytest.fixture
-def make_delete_request():
-    def inner(method: str, expected_status_code=200, data: dict = None, headers: dict = None) -> HTTPResponse:
-        data = data or {}
-        headers = headers or {}
-        url = service_url + '/api/v1' + method
-        with requests.delete(url, json=data, headers=headers) as response:
-            assert response.status_code == expected_status_code
-            return HTTPResponse(
-                body=response.json(),
-                headers=response.headers,
-                status=response.status_code,
-            )
-
-    return inner
-
-
-@pytest.fixture
-def make_post_request():
-    def inner(method: str, expected_status_code=200, data: dict = None, headers: dict = None) -> HTTPResponse:
-        data = data or {}
-        headers = headers or {}
-        url = service_url + '/api/v1' + method
-        with requests.post(url, json=data, headers=headers) as response:
-            assert response.status_code == expected_status_code
-            return HTTPResponse(
-                body=response.json(),
-                headers=response.headers,
-                status=response.status_code,
-            )
-
-    return inner
-
-
-@pytest.fixture
-def make_get_request():
-    def inner(method: str, expected_status_code=200, params: dict = None, headers: dict = None) -> HTTPResponse:
-        params = params or {}
-        headers = headers or {}
-        url = service_url + '/api/v1' + method
-        with requests.get(url, params=params, headers=headers) as response:
-            assert response.status_code == expected_status_code
-            return HTTPResponse(
-                body=response.json(),
-                headers=response.headers,
-                status=response.status_code,
-            )
-
-    return inner
+    response = client.post(
+        api_v1_user_login,
+        data=json.dumps(
+            {
+                "login": load_test_user_for_register['login'],
+                "password": load_test_user_for_register['password'],
+            }
+        ),
+        headers=headers,
+    )
+    yield response.json.get("access_token")
